@@ -6,6 +6,8 @@ use miette::miette;
 #[derive(Debug, clap::Parser)]
 struct Args {
     query: String,
+    // unique: bool, // TODO
+    // sort: bool, // TODO
 }
 
 fn main() -> miette::Result<()> {

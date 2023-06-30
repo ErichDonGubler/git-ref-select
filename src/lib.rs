@@ -69,7 +69,11 @@ impl<'a> Query<'a> {
             }
         }
 
-        Ok(GitQueryIter { refs, queries, git })
+        Ok(GitQueryIter {
+            refs: refs.into_iter(),
+            queries: queries.into_iter(),
+            git,
+        })
     }
 }
 
@@ -108,8 +112,8 @@ pub struct GitQueryIter<'a, G>
 where
     G: Git,
 {
-    refs: Vec<Result<String, G::QueryResultIterError>>,
-    queries: Vec<G::QueryIter>,
+    refs: std::vec::IntoIter<Result<String, G::QueryResultIterError>>,
+    queries: std::vec::IntoIter<G::QueryIter>,
     git: &'a G,
 }
 
@@ -123,13 +127,16 @@ where
         let Self { refs, queries, git } = self;
 
         loop {
-            while let Some(ref_) = refs.pop() {
+            while let Some(ref_) = refs.next() {
                 return Some(ref_);
             }
 
-            if let Some(query) = queries.pop() {
-                refs.extend(query);
+            if let Some(query) = queries.next() {
+                *refs = query.collect::<Vec<_>>().into_iter();
+                continue;
             }
+
+            break None;
         }
     }
 }

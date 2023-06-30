@@ -37,6 +37,7 @@ pub(crate) enum Token<'a> {
 
 impl<'a> Token<'a> {
     pub(crate) fn parser() -> impl Parser<'a, &'a str, Vec<Token<'a>>, extra::Err<Rich<'a, char>>> {
+        let ref_special_chars = "/-_@{}";
         choice((
             just('(').map_with_span(|_, span| Token::LParen(LParen { span })),
             just(')').map_with_span(|_, span| Token::RParen(RParen { span })),
@@ -53,9 +54,9 @@ impl<'a> Token<'a> {
                 .map_with_span(|value, span| Token::Ref(Ref { value, span })),
             ident()
                 .map_with_span(|name, span| Token::Ident(Ident { name, span }))
-                .then_ignore(none_of("/-_").rewind()),
+                .then_ignore(none_of(ref_special_chars).rewind()),
             any()
-                .filter(|c| char::is_ascii_alphanumeric(c) || matches!(c, '/' | '-' | '_'))
+                .filter(|c| char::is_ascii_alphanumeric(c) || ref_special_chars.contains(*c))
                 .repeated()
                 .at_least(1)
                 // .at_most(9001) // TODO
